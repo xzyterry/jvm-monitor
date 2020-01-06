@@ -1,0 +1,10 @@
+.idea/
+.gradle/
+*.iml
+
+common/build/
+common/out/
+
+
+fetch-service/build/
+fetch-service/out/
