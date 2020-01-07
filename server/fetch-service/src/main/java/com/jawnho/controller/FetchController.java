@@ -7,6 +7,7 @@ import com.jawnho.config.ServiceConfig;
 import com.jawnho.constant.CmdType;
 import com.jawnho.domain.GcRecord;
 import com.jawnho.domain.HostInfo;
+import com.jawnho.domain.JstackRecord;
 import com.jawnho.dto.JvmOpt;
 import com.jawnho.service.IGcRecordService;
 import com.jawnho.service.IHostInfoService;
@@ -19,7 +20,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 import org.eclipse.jetty.http.HttpURI;
 import org.eclipse.jetty.server.Request;
 import org.slf4j.Logger;
@@ -56,10 +56,71 @@ public class FetchController {
   }
 
   /**
+   * jstack基本数据
+   */
+  private List<JstackRecord> jstack(JSchExecutor executor, String pid) {
+    if (executor == null || Strings.isNullOrEmpty(pid)) {
+      return null;
+    }
+
+    String cmdStr = "jstack " + pid;
+    List<String> jstackList = new LinkedList<>();
+    try {
+      jstackList = executor.execCmd(cmdStr);
+    } catch (Exception e) {
+      log.error("jstack fail with exception: {}", LogUtil.extractStackTrace(e));
+    }
+
+    boolean meta = true;
+    String detail = "";
+    int lineNum = 0;
+    JstackRecord record = null;
+    List<JstackRecord> recordList = new LinkedList<>();
+    for (String jstack : jstackList) {
+      lineNum++;
+      // 忽略前两行
+      if (lineNum <= 2) {
+        continue;
+      }
+
+      if (Strings.isNullOrEmpty(jstack)) {
+        if (record != null) {
+          record.setDetail(detail);
+          record.cal();
+          recordList.add(record);
+        }
+
+        // 空行标志着新一个线程信息
+        meta = true;
+        record = new JstackRecord();
+        detail = "";
+        continue;
+      }
+
+      if (meta) {
+
+        for (int i = 1; i < jstack.length(); i++) {
+          if ('"' == jstack.charAt(i)) {
+            record.setName(jstack.substring(1, i));
+            break;
+          }
+        }
+        meta = false;
+      }
+
+      detail = detail + jstack + "\n";
+    }
+
+    return recordList;
+  }
+
+  /**
    * 定时获取基本数据
    */
   @Scheduled(cron = "0 0/1 * * * *")
   public void fetchGc() {
+
+    // TODO 异步请求更新
 
     // 获取服务器连接配置
     List<HostInfo> hostInfoList = hostInfoService.findAll();

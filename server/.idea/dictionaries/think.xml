@@ -2,6 +2,7 @@
   <dictionary name="think">
     <words>
       <w>gccapacity</w>
+      <w>jstack</w>
       <w>jstat</w>
       <w>passwd</w>
     </words>
