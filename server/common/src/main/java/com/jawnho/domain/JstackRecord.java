@@ -4,6 +4,7 @@ import com.google.common.base.Strings;
 import java.util.Date;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
@@ -19,6 +20,11 @@ public class JstackRecord {
    * 日期
    */
   private String dateStr;
+
+  /**
+   * 整分钟
+   */
+  private String minStr;
 
   /**
    * 服务器地址
@@ -41,34 +47,9 @@ public class JstackRecord {
   private String name;
 
   /**
-   * 线程优先级
-   */
-  private String prio;
-
-  /**
-   * 系统优先级
-   */
-  private String os_prio;
-
-  /**
-   * jvm中的线程号
-   */
-  private String tid;
-
-  /**
-   * 映射os中的进程号
-   */
-  private String nid;
-
-  /**
    * 运行状态
    */
   private String state;
-
-  /**
-   * 线程栈帧
-   */
-  private String startAddress;
 
   /**
    * 明细
@@ -78,6 +59,10 @@ public class JstackRecord {
   /**
    * 创建时间
    */
+  @Indexed(
+      background = true,
+      expireAfterSeconds = 1 * 24 * 60 * 60
+  )
   private Date createDate;
 
   public void cal() {

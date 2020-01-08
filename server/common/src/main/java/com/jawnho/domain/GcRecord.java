@@ -19,6 +19,11 @@ public class GcRecord {
   private String dateStr;
 
   /**
+   * 整分钟
+   */
+  private String minStr;
+
+  /**
    * 服务所在 服务器ip
    */
   private String ip;
@@ -40,7 +45,7 @@ public class GcRecord {
 
   @Indexed(
       background = true,
-      expireAfterSeconds = 7 * 24 * 60 * 60
+      expireAfterSeconds = 2 * 24 * 60 * 60
   )
   private Date createDate;
 

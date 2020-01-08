@@ -11,6 +11,7 @@ import com.jawnho.domain.JstackRecord;
 import com.jawnho.dto.JvmOpt;
 import com.jawnho.service.IGcRecordService;
 import com.jawnho.service.IHostInfoService;
+import com.jawnho.service.IJstackRecordService;
 import com.jawnho.util.JSchExecutor;
 import com.jawnho.util.LogUtil;
 import com.jawnho.util.ResponseUtil;
@@ -44,6 +45,8 @@ public class FetchController {
 
   private final IGcRecordService gcRecordService;
 
+  private final IJstackRecordService jstackRecordService;
+
   public FetchController(ServiceConfig serviceConfig) {
     Preconditions.checkNotNull(serviceConfig);
     IHostInfoService hostInfoService = serviceConfig.hostInfoService();
@@ -53,79 +56,26 @@ public class FetchController {
     IGcRecordService gcRecordService = serviceConfig.gcRecordService();
     Preconditions.checkNotNull(gcRecordService);
     this.gcRecordService = gcRecordService;
-  }
 
-  /**
-   * jstack基本数据
-   */
-  private List<JstackRecord> jstack(JSchExecutor executor, String pid) {
-    if (executor == null || Strings.isNullOrEmpty(pid)) {
-      return null;
-    }
-
-    String cmdStr = "jstack " + pid;
-    List<String> jstackList = new LinkedList<>();
-    try {
-      jstackList = executor.execCmd(cmdStr);
-    } catch (Exception e) {
-      log.error("jstack fail with exception: {}", LogUtil.extractStackTrace(e));
-    }
-
-    boolean meta = true;
-    String detail = "";
-    int lineNum = 0;
-    JstackRecord record = null;
-    List<JstackRecord> recordList = new LinkedList<>();
-    for (String jstack : jstackList) {
-      lineNum++;
-      // 忽略前两行
-      if (lineNum <= 2) {
-        continue;
-      }
-
-      if (Strings.isNullOrEmpty(jstack)) {
-        if (record != null) {
-          record.setDetail(detail);
-          record.cal();
-          recordList.add(record);
-        }
-
-        // 空行标志着新一个线程信息
-        meta = true;
-        record = new JstackRecord();
-        detail = "";
-        continue;
-      }
-
-      if (meta) {
-
-        for (int i = 1; i < jstack.length(); i++) {
-          if ('"' == jstack.charAt(i)) {
-            record.setName(jstack.substring(1, i));
-            break;
-          }
-        }
-        meta = false;
-      }
-
-      detail = detail + jstack + "\n";
-    }
-
-    return recordList;
+    IJstackRecordService jstackRecordService = serviceConfig.jstackRecordService();
+    Preconditions.checkNotNull(jstackRecordService);
+    this.jstackRecordService = jstackRecordService;
   }
 
   /**
    * 定时获取基本数据
    */
   @Scheduled(cron = "0 0/1 * * * *")
-  public void fetchGc() {
-
+  public void fetchData() {
+    String minStr = TimeUtil.getCurMinuteStartStr();
+    log.info("fetchData start at: {}, fetch {} data", TimeUtil.getCurDate(), minStr);
     // TODO 异步请求更新
+
 
     // 获取服务器连接配置
     List<HostInfo> hostInfoList = hostInfoService.findAll();
-
     List<GcRecord> gcRecordList = new LinkedList<>();
+    List<JstackRecord> jstackList = new LinkedList<>();
     for (HostInfo hostInfo : hostInfoList) {
       if (hostInfo == null) {
         continue;
@@ -166,13 +116,91 @@ public class FetchController {
           continue;
         }
         gcRecordList.add(gcRecord);
+
+        // 生成jstack
+        List<JstackRecord> subJstackList = jstack(executor, hostInfo, jvmOpt);
+        jstackList.addAll(subJstackList);
       }
 
-      // 入库
-      gcRecordService.insertAll(gcRecordList);
-
+      executor.disconnect();
     }
+
+    // 入库
+    gcRecordService.insertAll(gcRecordList);
+    log.info("gc insert {} records", gcRecordList.size());
+
+    jstackRecordService.insertAll(jstackList);
+    log.info("jstack insert {} records", jstackList.size());
+
+    log.info("fetchData end at: {}, fetch {} data", TimeUtil.getCurDate(), minStr);
   }
+
+  /**
+   * jstack基本数据
+   */
+  private List<JstackRecord> jstack(JSchExecutor executor, HostInfo hostInfo, JvmOpt jvmOpt) {
+    if (executor == null || hostInfo == null || jvmOpt == null) {
+      return null;
+    }
+
+    String cmdStr = "jstack " + jvmOpt.getPid();
+    List<String> jstackList = new LinkedList<>();
+    try {
+      jstackList = executor.execCmd(cmdStr);
+    } catch (Exception e) {
+      log.error("jstack fail with exception: {}", LogUtil.extractStackTrace(e));
+    }
+
+    boolean meta = true;
+    String detail = "";
+    int lineNum = 0;
+    JstackRecord record = null;
+    List<JstackRecord> recordList = new LinkedList<>();
+    for (String jstack : jstackList) {
+      lineNum++;
+      // 忽略前两行
+      if (lineNum <= 2) {
+        continue;
+      }
+
+      if (Strings.isNullOrEmpty(jstack)) {
+        if (record != null) {
+          record.setDateStr(TimeUtil.getCurDateStr());
+          record.setMinStr(TimeUtil.getDateMinuteStr(TimeUtil.getCurDate(), 1));
+          record.setIp(hostInfo.getHostIp());
+          record.setPid(jvmOpt.getPid());
+          record.setServiceName(jvmOpt.getServiceName());
+          record.setCreateDate(TimeUtil.getCurDate());
+
+          record.setDetail(detail);
+          record.cal();
+          recordList.add(record);
+        }
+
+        // 空行标志着新一个线程信息
+        meta = true;
+        record = new JstackRecord();
+        detail = "";
+        continue;
+      }
+
+      if (meta) {
+
+        for (int i = 1; i < jstack.length(); i++) {
+          if ('"' == jstack.charAt(i)) {
+            record.setName(jstack.substring(1, i));
+            break;
+          }
+        }
+        meta = false;
+      }
+
+      detail = detail + jstack + "\n";
+    }
+
+    return recordList;
+  }
+
 
   /**
    * 获取 jstat -gc pid 结果
@@ -201,6 +229,7 @@ public class FetchController {
 
     GcRecord rec = new GcRecord();
     rec.setDateStr(TimeUtil.getCurDateStr());
+    rec.setMinStr(TimeUtil.getDateMinuteStr(TimeUtil.getCurDate(), 1));
     rec.setIp(hostInfo.getHostIp());
     rec.setPid(jvmOpt.getPid());
     rec.setServiceName(jvmOpt.getServiceName());
