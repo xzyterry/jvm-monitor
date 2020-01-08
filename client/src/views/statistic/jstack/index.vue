@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-row>
-      <el-select v-model="hostName" filterable placeholder="请选择服务器">
+      <el-select v-model="params.hostName" filterable placeholder="请选择服务器">
         <el-option
           v-for="item in options"
           :key="item.value"
@@ -9,7 +9,7 @@
           :value="item.value"
         />
       </el-select>
-      <el-select v-model="serviceName" filterable placeholder="请选择服务">
+      <el-select v-model="params.serviceName" filterable placeholder="请选择服务">
         <el-option
           v-for="item in options"
           :key="item.value"
@@ -18,18 +18,18 @@
         />
       </el-select>
       <el-date-picker
-        v-model="dateStr"
+        v-model="params.dateStr"
         type="date"
         value-format="yyyy-MM-dd"
         placeholder="选择日期"
       />
       <el-time-picker
-        v-model="minStr"
+        v-model="params.minStr"
         format="HH:mm"
         value-format="HH:mm"
         placeholder="选择时间范围"
       />
-      <el-button icon="el-search" type="primary">查询</el-button>
+      <el-button icon="el-search" type="primary" @click="handleQuery">查询</el-button>
     </el-row>
 
     <el-row>
@@ -42,19 +42,46 @@
 </template>
 
 <script>
+import { query } from '@/api/jstack.js'
 export default {
   data() {
     return {
-      dateStr: '',
-      minStr: '',
-      hostName: '',
-      serviceName: ''
+      params: {
+        dateStr: '',
+        minStr: '',
+        hostName: '',
+        serviceName: ''
+      },
+      data: [],
+      type: []
     }
   },
   mounted() {
     this.init()
   },
   methods: {
+    handleQuery() {
+      query({ params: this.params })
+        .then(resolve => {
+          var data = resolve.data
+          if (data == null || data.length < 1) {
+            return
+          }
+
+          data.forEach(item => {
+            var obj = {}
+            obj.value = item.count
+            var state = item.state == null ? '其他 ' : item.state
+            obj.name = state
+            this.data.push(obj)
+            this.type.push(state)
+          })
+          this.init()
+        })
+        .catch(err => {
+          console.log(err)
+        })
+    },
     init() {
       var myChart = this.$echarts.init(document.getElementById('online'))
       var option = {
@@ -62,14 +89,17 @@ export default {
           trigger: 'item',
           formatter: '{a} <br/>{b}: {c} ({d}%)'
         },
+        title: {
+          text: '线程状态'
+        },
         legend: {
           orient: 'vertical',
-          left: 10,
-          data: ['直接访问', '邮件营销', '联盟广告', '视频广告', '搜索引擎']
+          right: 10,
+          data: this.type
         },
         series: [
           {
-            name: '访问来源',
+            name: '线程状态',
             type: 'pie',
             radius: ['50%', '70%'],
             avoidLabelOverlap: false,
@@ -81,7 +111,7 @@ export default {
               emphasis: {
                 show: true,
                 textStyle: {
-                  fontSize: '30',
+                  fontSize: '20',
                   fontWeight: 'bold'
                 }
               }
@@ -91,13 +121,7 @@ export default {
                 show: false
               }
             },
-            data: [
-              { value: 335, name: '直接访问' },
-              { value: 310, name: '邮件营销' },
-              { value: 234, name: '联盟广告' },
-              { value: 135, name: '视频广告' },
-              { value: 1548, name: '搜索引擎' }
-            ]
+            data: this.data
           }
         ]
       }
