@@ -21,15 +21,26 @@ public class JstackRecord {
    */
   private String dateStr;
 
+  public static final String DATE_STR = "dateStr";
+
   /**
    * 整分钟
    */
   private String minStr;
 
+  public static final String MIN_STR = "minStr";
+
   /**
    * 服务器地址
    */
   private String ip;
+
+  /**
+   * 服务器自定义名称
+   */
+  private String hostName;
+
+  public static final String HOST_NAME = "hostName";
 
   /**
    * java的进程号
@@ -41,6 +52,8 @@ public class JstackRecord {
    */
   private String serviceName;
 
+  public static final String SERVICE_NAME = "serviceName";
+
   /**
    * 线程名
    */
@@ -51,10 +64,14 @@ public class JstackRecord {
    */
   private String state;
 
+  public static final String STATE ="state";
+
   /**
    * 明细
    */
   private String detail;
+
+  public static final String DETAIL = "detail";
 
   /**
    * 创建时间

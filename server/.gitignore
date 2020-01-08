@@ -5,6 +5,11 @@
 common/build/
 common/out/
 
-
 fetch-service/build/
 fetch-service/out/
+
+schedule-service/build/
+schedule-service/out/
+
+dashboard-service/build/
+dashboard-service/out/

@@ -1,4 +1,6 @@
 rootProject.name = 'server'
 include 'common'
 include 'fetch-service'
+include 'schedule-service'
+include 'dashboard-service'
 

@@ -67,7 +67,7 @@ public class FetchController {
    */
   @Scheduled(cron = "0 0/1 * * * *")
   public void fetchData() {
-    String minStr = TimeUtil.getCurMinuteStartStr();
+    String minStr = TimeUtil.getDateMinuteStr(TimeUtil.getCurDate(), 1);
     log.info("fetchData start at: {}, fetch {} data", TimeUtil.getCurDate(), minStr);
     // TODO 异步请求更新
 
@@ -168,6 +168,7 @@ public class FetchController {
           record.setDateStr(TimeUtil.getCurDateStr());
           record.setMinStr(TimeUtil.getDateMinuteStr(TimeUtil.getCurDate(), 1));
           record.setIp(hostInfo.getHostIp());
+          record.setHostName(hostInfo.getHostName());
           record.setPid(jvmOpt.getPid());
           record.setServiceName(jvmOpt.getServiceName());
           record.setCreateDate(TimeUtil.getCurDate());

@@ -13,8 +13,14 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Getter
 public class HostInfo {
 
+  /**
+   * 主机ip
+   */
   private String hostIp;
 
+  /**
+   * 主机昵称(自定义)
+   */
   private String hostName;
 
   private String username;

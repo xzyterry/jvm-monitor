@@ -1,6 +1,7 @@
 package com.jawnho.service;
 
 import com.jawnho.domain.JstackRecord;
+import com.jawnho.domain.JstackStatisticRec;
 import java.util.List;
 
 /**
@@ -10,4 +11,7 @@ import java.util.List;
 public interface IJstackRecordService {
 
   void insertAll(List<JstackRecord> jstackList);
+
+  List<JstackStatisticRec> aggregate(String dateMinuteStr);
+
 }
