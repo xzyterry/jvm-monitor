@@ -3,12 +3,21 @@ package com.jawnho.domain;
 import java.util.Date;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.index.Indexed;
 
 /**
  * @author jawnho
  * @date 2020/1/8
  */
+@CompoundIndexes({
+    @CompoundIndex(
+        name = "minStr_1_dateStr_1_serviceName_1_hostName_1",
+        def = "{'minStr' : 1 , 'dateStr' : 1 ,'serviceName' : 1 , 'hostName' : 1}",
+        background = true
+    )
+})
 @Setter
 @Getter
 public class JstackStatisticRec {

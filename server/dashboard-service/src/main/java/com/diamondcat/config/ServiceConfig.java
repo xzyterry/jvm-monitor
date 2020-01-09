@@ -1,6 +1,8 @@
 package com.diamondcat.config;
 
 import com.google.common.base.Preconditions;
+import com.jawnho.service.HostServiceService;
+import com.jawnho.service.IHostServiceService;
 import com.jawnho.service.IJstackRecordService;
 import com.jawnho.service.IJstackStatisticRecService;
 import com.jawnho.service.JstackRecordService;
@@ -47,6 +49,11 @@ public class ServiceConfig {
   @Bean
   public IJstackStatisticRecService jstackStatisticRecService() {
     return new JstackStatisticRecService(mainMongoTemplate);
+  }
+
+  @Bean
+  public IHostServiceService hostServiceService() {
+    return new HostServiceService(mainMongoTemplate);
   }
 
   // endregion

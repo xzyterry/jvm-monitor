@@ -3,8 +3,10 @@ package com.jawnho.config;
 import com.google.common.base.Preconditions;
 import com.jawnho.service.GcRecordService;
 import com.jawnho.service.HostInfoService;
+import com.jawnho.service.HostServiceService;
 import com.jawnho.service.IGcRecordService;
 import com.jawnho.service.IHostInfoService;
+import com.jawnho.service.IHostServiceService;
 import com.jawnho.service.IJstackRecordService;
 import com.jawnho.service.JstackRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +56,11 @@ public class ServiceConfig {
   @Bean
   public IJstackRecordService jstackRecordService(){
     return  new JstackRecordService(mainMongoTemplate);
+  }
+
+  @Bean
+  public IHostServiceService hostServiceService(){
+    return new HostServiceService(mainMongoTemplate);
   }
 
   // endregion

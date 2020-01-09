@@ -1,10 +1,12 @@
 package com.diamondcat.controller;
 
 import com.diamondcat.config.ServiceConfig;
-import com.google.common.base.Preconditions;
 import com.diamondcat.param.JstackParam;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.jawnho.domain.HostService;
 import com.jawnho.domain.JstackStatisticRec;
+import com.jawnho.service.IHostServiceService;
 import com.jawnho.service.IJstackStatisticRecService;
 import com.jawnho.util.CheckUtil;
 import com.jawnho.util.LogUtil;
@@ -34,14 +36,35 @@ public class DataController {
 
   private final IJstackStatisticRecService jstackStatisticRecService;
 
+  private final IHostServiceService hostServiceService;
+
   public DataController(ServiceConfig serviceConfig) {
     Preconditions.checkNotNull(serviceConfig);
     IJstackStatisticRecService jstackStatisticRecService = serviceConfig
         .jstackStatisticRecService();
     Preconditions.checkNotNull(jstackStatisticRecService);
     this.jstackStatisticRecService = jstackStatisticRecService;
+
+    IHostServiceService hostServiceService = serviceConfig.hostServiceService();
+    Preconditions.checkNotNull(hostServiceService);
+    this.hostServiceService = hostServiceService;
   }
 
+  /**
+   * 查询主机列表
+   */
+  @RequestMapping("/hostList")
+  public Map<String, Object> hostList() {
+
+    // TODO 修改为加载到内存
+    List<HostService> hostServiceList = hostServiceService.findAll();
+    return ResponseUtil.success(null, hostServiceList);
+  }
+
+
+  /**
+   * 查询jstack数据
+   */
   @PostMapping("/jstack")
   public Map<String, Object> jstack(@RequestBody JstackParam param) {
     CheckUtil.checkNotNull(param);

@@ -7,10 +7,12 @@ import com.jawnho.config.ServiceConfig;
 import com.jawnho.constant.CmdType;
 import com.jawnho.domain.GcRecord;
 import com.jawnho.domain.HostInfo;
+import com.jawnho.domain.HostService;
 import com.jawnho.domain.JstackRecord;
 import com.jawnho.dto.JvmOpt;
 import com.jawnho.service.IGcRecordService;
 import com.jawnho.service.IHostInfoService;
+import com.jawnho.service.IHostServiceService;
 import com.jawnho.service.IJstackRecordService;
 import com.jawnho.util.JSchExecutor;
 import com.jawnho.util.LogUtil;
@@ -47,6 +49,8 @@ public class FetchController {
 
   private final IJstackRecordService jstackRecordService;
 
+  private final IHostServiceService hostServiceService;
+
   public FetchController(ServiceConfig serviceConfig) {
     Preconditions.checkNotNull(serviceConfig);
     IHostInfoService hostInfoService = serviceConfig.hostInfoService();
@@ -60,6 +64,10 @@ public class FetchController {
     IJstackRecordService jstackRecordService = serviceConfig.jstackRecordService();
     Preconditions.checkNotNull(jstackRecordService);
     this.jstackRecordService = jstackRecordService;
+
+    IHostServiceService hostServiceService = serviceConfig.hostServiceService();
+    Preconditions.checkNotNull(hostServiceService);
+    this.hostServiceService = hostServiceService;
   }
 
   /**
@@ -71,10 +79,10 @@ public class FetchController {
     log.info("fetchData start at: {}, fetch {} data", TimeUtil.getCurDate(), minStr);
     // TODO 异步请求更新
 
-
     // 获取服务器连接配置
     List<HostInfo> hostInfoList = hostInfoService.findAll();
     List<GcRecord> gcRecordList = new LinkedList<>();
+    List<HostService> hostServiceList = new LinkedList<>();
     List<JstackRecord> jstackList = new LinkedList<>();
     for (HostInfo hostInfo : hostInfoList) {
       if (hostInfo == null) {
@@ -110,6 +118,12 @@ public class FetchController {
           continue;
         }
 
+        // 更新每个服务器的服务列表
+        HostService hostService = new HostService();
+        hostService.setHostName(hostInfo.getHostName());
+        hostService.setServiceName(jvmOpt.getServiceName());
+        hostServiceList.add(hostService);
+
         // 生成gcRecord
         GcRecord gcRecord = getGcRecord(executor, hostInfo, jvmOpt);
         if (gcRecord == null) {
@@ -126,6 +140,9 @@ public class FetchController {
     }
 
     // 入库
+    hostServiceService.insertAll(hostServiceList);
+    log.info("hostService upsert {} records", hostServiceList.size());
+
     gcRecordService.insertAll(gcRecordList);
     log.info("gc insert {} records", gcRecordList.size());
 

@@ -8,7 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * @author jawnho
- * @date 2020/1/5
+ * @date 2020/1/8
  */
 @CompoundIndexes({
     @CompoundIndex(
@@ -19,24 +19,17 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
     )
 })
-
 @Document
 @Setter
 @Getter
-public class HostInfo {
+public class HostService {
 
-  /**
-   * 主机ip
-   */
-  private String hostIp;
-
-  /**
-   * 主机昵称(自定义)
-   */
   private String hostName;
 
-  private String username;
+  public static final String HOST_NAME = "hostName";
 
-  private String password;
+  private String serviceName;
+
+  public static final String SERVICE_NAME = "serviceName";
 
 }
