@@ -16,6 +16,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Getter
 public class GcRecord {
 
+  @Indexed
   private String dateStr;
 
   /**
@@ -43,10 +44,7 @@ public class GcRecord {
    */
   private List<String> data;
 
-  @Indexed(
-      background = true,
-      expireAfterSeconds = 2 * 24 * 60 * 60
-  )
+  @Indexed(expireAfterSeconds = 2 * 24 * 60 * 60)
   private Date createDate;
 
 }

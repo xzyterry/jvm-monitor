@@ -76,10 +76,7 @@ public class JstackRecord {
   /**
    * 创建时间
    */
-  @Indexed(
-      background = true,
-      expireAfterSeconds = 1 * 24 * 60 * 60
-  )
+  @Indexed(expireAfterSeconds = 1 * 24 * 60 * 60)
   private Date createDate;
 
   public void cal() {

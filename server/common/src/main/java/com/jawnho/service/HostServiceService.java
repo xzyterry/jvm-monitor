@@ -3,7 +3,10 @@ package com.jawnho.service;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.jawnho.domain.HostService;
+import com.jawnho.util.TimeUtil;
+import java.util.Date;
 import java.util.List;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -46,11 +49,18 @@ public class HostServiceService implements IHostServiceService {
               .and(HostService.SERVICE_NAME).is(serviceName)
       );
 
+      Date curDate = TimeUtil.getCurDate();
       Update update = new Update();
       update.setOnInsert(HostService.SERVICE_NAME, serviceName);
       update.setOnInsert(HostService.HOST_NAME, hostName);
+      update.setOnInsert(HostService.CREATE_DATE, curDate);
+      update.set(HostService.UPDATE_DATE, curDate);
 
-      mongoTemplate.upsert(query, update, HostService.class);
+      FindAndModifyOptions options = new FindAndModifyOptions();
+      options.upsert(true);
+      options.returnNew(true);
+
+      mongoTemplate.findAndModify(query, update, options, HostService.class);
     }
   }
 

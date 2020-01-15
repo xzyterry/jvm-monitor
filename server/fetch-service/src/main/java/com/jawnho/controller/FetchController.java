@@ -19,6 +19,7 @@ import com.jawnho.util.LogUtil;
 import com.jawnho.util.ResponseUtil;
 import com.jawnho.util.TimeUtil;
 import com.jcraft.jsch.JSchException;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -245,14 +246,15 @@ public class FetchController {
       return null;
     }
 
+    Date curDate = TimeUtil.getCurDate();
     GcRecord rec = new GcRecord();
     rec.setDateStr(TimeUtil.getCurDateStr());
-    rec.setMinStr(TimeUtil.getDateMinuteStr(TimeUtil.getCurDate(), 1));
+    rec.setMinStr(TimeUtil.getDateMinuteStr(curDate, 1));
     rec.setIp(hostInfo.getHostIp());
     rec.setPid(jvmOpt.getPid());
     rec.setServiceName(jvmOpt.getServiceName());
     rec.setData(data);
-    rec.setCreateDate(TimeUtil.getCurDate());
+    rec.setCreateDate(curDate);
 
     return rec;
   }
